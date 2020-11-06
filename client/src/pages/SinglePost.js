@@ -19,6 +19,9 @@ import DeleteButton from '../components/DeleteButton';
 function SinglePost(props) {
   const postId = props.match.params.postId;
   const { user } = useContext(AuthContext);
+  const commentInputRef = useRef(null);
+
+  const [comment, setComment] = useState('');
 
   const {
     data: { getPost },
@@ -27,6 +30,17 @@ function SinglePost(props) {
       postId,
     },
   });
+
+  const [submitComment] = useMutation(SUBMIT_COMMENT_MUTATION, {
+    update(){
+      setComment('');
+      commentInputRef.current.blur();
+    },
+    variables: {
+      postId,
+      body: comment
+    }
+  })
 
   function deletePostCallback() {
     props.history.push('/');
@@ -134,9 +148,21 @@ function SinglePost(props) {
   return postMarkup;
 }
 
+const SUBMIT_COMMENT_MUTATION = gql`
+  mutation($postId: String!, $body: String!){
+    createComment(postId: $postId, body: $body){
+      id
+      comments{
+        id body createdAt username
+      }
+      commentCount
+    }
+  }
+`
+
 const FETCH_POST_QUERY = gql`
   query($postId: ID!) {
-    getPost(ppostId: $postId) {
+    getPost(postId: $postId) {
       id
       body
       createdAt
